@@ -164,16 +164,21 @@ const gf2elem_t base_y     = { 0xd8e0286b, 0x5863ec48, 0xaa9ca27a, 0xe9c55215, 0
 const scalar_t  base_order = { 0xe01e5fcf, 0x4b5c83b8, 0xe3e7ca5b, 0x557d5ed3, 0x20400ec4, 0x83b2d4ea, 0xfffffe5f, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0x007fffff }; 
  #endif
 
- #if (ECC_CURVE == NIST_B409)
-  #define coeff_a  1
-  #define cofactor 2
+ #if (ECC_CURVE == NIST_B384)
+  #define coeff_a  0
+  #define cofactor 1
 /* NIST B-409 */
-const gf2elem_t polynomial = { 0x00000001, 0x00000000, 0x00800000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x02000000 }; 
-const gf2elem_t coeff_b    = { 0x7b13545f, 0x4f50ae31, 0xd57a55aa, 0x72822f6c, 0xa9a197b2, 0xd6ac27c8, 0x4761fa99, 0xf1f3dd67, 0x7fd6422e, 0x3b7b476b, 0x5c4b9a75, 0xc8ee9feb, 0x0021a5c2 }; 
-const gf2elem_t base_x     = { 0xbb7996a7, 0x60794e54, 0x5603aeab, 0x8a118051, 0xdc255a86, 0x34e59703, 0xb01ffe5b, 0xf1771d4d, 0x441cde4a, 0x64756260, 0x496b0c60, 0xd088ddb3, 0x015d4860 }; 
-const gf2elem_t base_y     = { 0x0273c706, 0x81c364ba, 0xd2181b36, 0xdf4b4f40, 0x38514f1f, 0x5488d08f, 0x0158aa4f, 0xa7bd198d, 0x7636b9c5, 0x24ed106a, 0x2bbfa783, 0xab6be5f3, 0x0061b1cf }; 
-const scalar_t  base_order = { 0xd9a21173, 0x8164cd37, 0x9e052f83, 0x5fa47c3c, 0xf33307be, 0xaad6a612, 0x000001e2, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x01000000 }; 
- #endif
+// a
+const gf2elem_t polynomial = { 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xfffffffe, 0xffffffff, 0x00800000, 0x00000000, 0xfffffffc };
+// b
+const gf2elem_t coeff_b    = { 0xb3312fa7, 0xe23ee7e4, 0x988e056b, 0xe3f82d19, 0x181d9c6e, 0xfe814112, 0x0314088f, 0x5013875a, 0xc656398d, 0x8a2ed19d, 0x2a85c8ed, 0xd3ec2aef };
+// g
+const gf2elem_t base_x     = { 0xaa87ca22, 0xbe8b0537, 0x8eb1c71e, 0xf320ad74, 0x6e1d3b62, 0x8ba79b98, 0x59f741e0, 0x82542a38, 0x5502f25d, 0xbf55296c, 0x3a545e38, 0x72760ab7 };
+// uncompressed g
+const gf2elem_t base_y     = { 0x3617de4a, 0x96262c6f, 0x5d9e98bf, 0x9292dc29, 0xf8f41dbd, 0x289a147c, 0xe9da3113, 0xb5f0b8c0, 0x0a60b1ce, 0x1d7e819d, 0x7a431d7c, 0x90ea0e5f };
+// n
+const scalar_t  base_order = { 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xc7634d81, 0xf4372ddf, 0x581a0db2, 0x48b0a77a, 0xecec196a, 0xccc52973 };
+#endif
 
  #if (ECC_CURVE == NIST_K571)
   #define coeff_a  0
@@ -973,5 +978,120 @@ int ecdsa_verify(const uint8_t* public_key, uint8_t* hash, const uint8_t* signat
   return success;
 }
 
+
+
+========================
+
+/* 
+
+  Crypto using elliptic curves defined over the finite binary field GF(2^m) where m is prime.
+
+  The curves used are the anomalous binary curves (ABC-curves) or also called Koblitz curves.
+
+  This class of curves was chosen because it yields efficient implementation of operations.
+
+
+
+  Curves available - their different NIST/SECG names and eqivalent symmetric security level:
+
+      NIST      SEC Group     strength
+    ------------------------------------
+      K-163     sect163k1      80 bit
+      B-163     sect163r2      80 bit
+      K-233     sect233k1     112 bit
+      B-233     sect233r1     112 bit
+      K-283     sect283k1     128 bit
+      B-283     sect283r1     128 bit
+      K-409     sect409k1     192 bit
+      B-409     sect409r1     192 bit
+      K-571     sect571k1     256 bit
+      B-571     sect571r1     256 bit
+
+
+
+  Curve parameters from:
+
+    http://www.secg.org/sec2-v2.pdf
+    http://csrc.nist.gov/publications/fips/fips186-3/fips_186-3.pdf
+
+
+  Reference:
+
+    https://www.ietf.org/rfc/rfc4492.txt 
+*/
+
+#ifndef _ECDH_H__
+#define _ECDH_H__
+
+
+/* for size-annotated integer types: uint8_t, uint32_t etc. */
+#include <stdint.h> 
+
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
+#define NIST_B163  1
+#define NIST_K163  2
+#define NIST_B233  3
+#define NIST_K233  4
+#define NIST_B283  5
+#define NIST_K283  6
+#define NIST_B384  7
+#define NIST_K409  8
+#define NIST_B571  9
+#define NIST_K571 10
+
+/* What is the default curve to use? */
+#ifndef ECC_CURVE
+ #define ECC_CURVE NIST_B384
+#endif
+
+#if defined(ECC_CURVE) && (ECC_CURVE != 0)
+ #if   (ECC_CURVE == NIST_K163) || (ECC_CURVE == NIST_B163)
+  #define CURVE_DEGREE       163
+  #define ECC_PRV_KEY_SIZE   24
+ #elif (ECC_CURVE == NIST_K233) || (ECC_CURVE == NIST_B233)
+  #define CURVE_DEGREE       233
+  #define ECC_PRV_KEY_SIZE   32
+ #elif (ECC_CURVE == NIST_K283) || (ECC_CURVE == NIST_B283)
+  #define CURVE_DEGREE       283
+  #define ECC_PRV_KEY_SIZE   36
+ #elif ((ECC_CURVE == NIST_B384))
+  #define CURVE_DEGREE       384
+  #define ECC_PRV_KEY_SIZE   48
+ #elif (ECC_CURVE == NIST_K571) || (ECC_CURVE == NIST_B571)
+  #define CURVE_DEGREE       571
+  #define ECC_PRV_KEY_SIZE   72
+ #endif
+#else
+ #error Must define a curve to use
+#endif
+
+#define ECC_PUB_KEY_SIZE     (2 * ECC_PRV_KEY_SIZE)
+
+
+/******************************************************************************/
+
+
+/* NOTE: assumes private is filled with random data before calling */
+int ecdh_generate_keys(uint8_t* public_key, uint8_t* private_key);
+
+/* input: own private key + other party's public key, output: shared secret */
+int ecdh_shared_secret(const uint8_t* private_key, const uint8_t* others_pub, uint8_t* output);
+
+
+/* Broken :( .... */
+int ecdsa_sign(const uint8_t* private_key, uint8_t* hash, uint8_t* random_k, uint8_t* signature);
+int ecdsa_verify(const uint8_t* public_key, uint8_t* hash, const uint8_t* signature);
+
+
+/******************************************************************************/
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
+
+#endif /* #ifndef _ECDH_H__ */
 
 
