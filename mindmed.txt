@@ -1095,3 +1095,23 @@ int ecdsa_verify(const uint8_t* public_key, uint8_t* hash, const uint8_t* signat
 #endif /* #ifndef _ECDH_H__ */
 
 
+=====================
+
+
+
+pi@raspberrypi:~/Desktop $ cd tiny-ECDHESP/
+pi@raspberrypi:~/Desktop/tiny-ECDHESP $ ls
+ecdh.c  ecdh_demo  ecdh_example.c  ecdh.h  LICENSE  mindmed.txt  README.md
+pi@raspberrypi:~/Desktop/tiny-ECDHESP $  gcc -o ecdh_demo ecdh_example.c ecdh.c -lm
+pi@raspberrypi:~/Desktop/tiny-ECDHESP $ ./ecdh_demo
+Key Pair Generation Time: 20550.870000ms
+pi@raspberrypi:~/Desktop/tiny-ECDHESP $ sudo nano ecdh_example.c
+pi@raspberrypi:~/Desktop/tiny-ECDHESP $ sudo nano ecdh.h
+pi@raspberrypi:~/Desktop/tiny-ECDHESP $ gcc -o ecdh_demo ecdh_example.c ecdh.c -lm
+pi@raspberrypi:~/Desktop/tiny-ECDHESP $ ./ecdh_demo
+Key Pair Generation Time: 7971.005000ms
+pi@raspberrypi:~/Desktop/tiny-ECDHESP $ sudo nano ecdh.h
+pi@raspberrypi:~/Desktop/tiny-ECDHESP $ gcc -o ecdh_demo ecdh_example.c ecdh.c -lm
+pi@raspberrypi:~/Desktop/tiny-ECDHESP $ ./ecdh_demo
+Key Pair Generation Time: 2775.516000ms
+pi@raspberrypi:~/Desktop/tiny-ECDHESP $

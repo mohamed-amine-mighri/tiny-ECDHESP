@@ -20,81 +20,124 @@
   Pseudo-random number generator inspired / stolen from: http://burtleburtle.net/bob/rand/smallprng.html
 
 */
+// #include <stdio.h>
+// #include <stdlib.h>
+// #include <sys/time.h>
+// #include "ecdh.h"
+// #include "cpucycles.h"
+// #include "speed_print.h"
 
-#include <assert.h>
+// #define NTESTS 100
+
+// static void ecdh_demo(void)
+// {
+//     static uint8_t puba[ECC_PUB_KEY_SIZE];
+//     static uint8_t prva[ECC_PRV_KEY_SIZE];
+//     static uint8_t seca[ECC_PUB_KEY_SIZE];
+//     static uint8_t pubb[ECC_PUB_KEY_SIZE];
+//     static uint8_t prvb[ECC_PRV_KEY_SIZE];
+//     static uint8_t secb[ECC_PUB_KEY_SIZE];
+//     uint32_t i;
+
+//     // Generate random private keys
+//     for (i = 0; i < ECC_PRV_KEY_SIZE; ++i)
+//     {
+//         prva[i] = rand();
+//         prvb[i] = rand();
+//     }
+
+//     // Alice generates keys and sends public key to Bob
+//     ecdh_generate_keys(puba, prva);
+
+//     // Bob generates keys and sends public key to Alice
+//     ecdh_generate_keys(pubb, prvb);
+
+//     // Alice calculates shared secret
+//     ecdh_shared_secret(prva, pubb, seca);
+
+//     // Bob calculates shared secret
+//     ecdh_shared_secret(prvb, puba, secb);
+// }
+
+
+
+// int main(int argc, char* argv[])
+// {
+//     unsigned int i;
+//     uint64_t t[NTESTS];
+
+//     for(i = 0; i < NTESTS; i++) {
+//         t[i] = cpucycles();
+//         ecdh_demo();
+//     }
+    
+//     print_result("CPU: ", t, NTESTS );
+
+//     return 0;
+// }
+
+/*********************************************************************/
+
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
-#include "ecdh.h"
-#include <time.h>
 #include <sys/time.h>
-
-/* pseudo random number generator with 128 bit internal state... probably not suited for cryptographical usage */
-
+#include "ecdh.h"
 
 static void ecdh_demo(void)
 {
-  static uint8_t puba[ECC_PUB_KEY_SIZE];
-  static uint8_t prva[ECC_PRV_KEY_SIZE];
-  static uint8_t seca[ECC_PUB_KEY_SIZE];
-  static uint8_t pubb[ECC_PUB_KEY_SIZE];
-  static uint8_t prvb[ECC_PRV_KEY_SIZE];
-  static uint8_t secb[ECC_PUB_KEY_SIZE];
-  uint32_t i;
+    static uint8_t puba[ECC_PUB_KEY_SIZE];
+    static uint8_t prva[ECC_PRV_KEY_SIZE];
+    static uint8_t seca[ECC_PUB_KEY_SIZE];
+    static uint8_t pubb[ECC_PUB_KEY_SIZE];
+    static uint8_t prvb[ECC_PRV_KEY_SIZE];
+    static uint8_t secb[ECC_PUB_KEY_SIZE];
+    uint32_t i;
 
-  for (i = 0; i < ECC_PRV_KEY_SIZE; ++i)
-  {
-    prva[i] = rand();
-    prvb[i] = rand();
-  }
-  
-  /* 1. Alice picks a (secret) random natural number 'a', calculates P = a * g and sends P to Bob. */
+    // Generate random private keys
+    for (i = 0; i < ECC_PRV_KEY_SIZE; ++i)
+    {
+        prva[i] = rand();
+        prvb[i] = rand();
+    }
 
-  ecdh_generate_keys(puba, prva);
+    // Alice generates keys and sends public key to Bob
+    ecdh_generate_keys(puba, prva);
 
-  /* 2. Bob picks a (secret) random natural number 'b', calculates Q = b * g and sends Q to Alice. */
+    // Bob generates keys and sends public key to Alice
+    ecdh_generate_keys(pubb, prvb);
 
-  ecdh_generate_keys(pubb, prvb);
+    // Alice calculates shared secret
+    ecdh_shared_secret(prva, pubb, seca);
 
-  /* 3. Alice calculates S = a * Q = a * (b * g). */
-  ecdh_shared_secret(prva, pubb, seca);
-
-  /* 4. Bob calculates T = b * P = b * (a * g). */
-  ecdh_shared_secret(prvb, puba, secb);
-
+    // Bob calculates shared secret
+    ecdh_shared_secret(prvb, puba, secb);
 }
-
-struct timeval start, end, total, total_new = {0};
 
 int main(int argc, char* argv[])
 {
-  int i;
-  int ncycles = 1;
-  double total_sum = 0.0;
-  if (argc > 1)
-  {
-    ncycles = atoi(argv[1]);
-  }
+    int i, ncycles = 1;
+    struct timeval start, end, total;
+    double total_time = 0.0;
 
-  for (i = 0; i < ncycles; ++i)
-  {
-    gettimeofday(&start, NULL);
-    ecdh_demo();
-    gettimeofday(&end, NULL);
-    timersub(&end, &start, &total);
-        if (i == 0) {
-            total_new = total;
-        } else {
-            timeradd(&total, &total_new, &total_new);
-        }
+    if (argc > 1)
+    {
+        ncycles = atoi(argv[1]);
     }
-    total_sum = ((double)total_new.tv_sec * 1000.0) + ((double)total_new.tv_usec / 1000.0);
-    total_sum /= ncycles;
 
-    printf("Key Pair Generation Time: %fms\n", total_sum);
+    // Measure execution time
+    for (i = 0; i < ncycles; ++i)
+    {
+        gettimeofday(&start, NULL);
+        ecdh_demo();
+        gettimeofday(&end, NULL);
+        timersub(&end, &start, &total);
+        total_time += total.tv_sec + total.tv_usec * 1e-6;
+    }
 
-  return 0;
+    // Calculate average time
+    total_time /= ncycles;
+
+    printf("Average Execution Time: %f seconds\n", total_time);
+
+    return 0;
 }
-
-
-
